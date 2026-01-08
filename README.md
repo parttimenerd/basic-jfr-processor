@@ -1,6 +1,6 @@
 # Java Thread Dump Parser Library
 
-[![CI](https://github.com/parttimenerd/basic-jfr-processor/actions/workflows/ci.yml/badge.svg)](https://github.com/parttimenerd/jthreaddump/actions/workflows/ci.yml)
+[![CI](https://github.com/parttimenerd/basic-jfr-processor/actions/workflows/ci.yml/badge.svg)](https://github.com/parttimenerd/jthreaddump/actions/workflows/ci.yml) ![Maven Central Version](https://img.shields.io/maven-central/v/me.bechberger/basic-jfr-processor)
 
 A small Java library for using the 
 [JMC Flight Recorder (JFR) APIs](https://central.sonatype.com/artifact/org.openjdk.jmc/flightrecorder.writer) 
