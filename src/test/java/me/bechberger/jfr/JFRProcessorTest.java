@@ -31,7 +31,7 @@ public class JFRProcessorTest {
     // ========== Basic Roundtrip Tests ==========
 
     @Test
-    public void testRoundtripSimpleEvent() throws IOException {
+    public void roundtripPreservesSimpleEvent() throws IOException {
         helper.roundtrip(() -> {
             SimpleEvent event = new SimpleEvent();
             event.message = "Hello World";
@@ -45,7 +45,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripComplexEvent() throws IOException {
+    public void roundtripPreservesComplexEvent() throws IOException {
         helper.roundtrip(() -> {
             ComplexEvent event = new ComplexEvent();
             event.stringField = "test string";
@@ -65,7 +65,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripMultipleEvents() throws IOException {
+    public void roundtripPreservesMultipleEvents() throws IOException {
         helper.roundtrip(() -> {
             for (int i = 0; i < 10; i++) {
                 SimpleEvent event = new SimpleEvent();
@@ -82,7 +82,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripMixedEventTypes() throws IOException {
+    public void roundtripPreservesMixedEventTypes() throws IOException {
         helper.roundtrip(() -> {
             SimpleEvent simple = new SimpleEvent();
             simple.message = "Simple";
@@ -109,7 +109,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripWithNullValues() throws IOException {
+    public void roundtripPreservesNullValues() throws IOException {
         helper.roundtrip(() -> {
             SimpleEvent event = new SimpleEvent();
             event.message = null;
@@ -125,7 +125,7 @@ public class JFRProcessorTest {
     // ========== Basic Functionality Tests ==========
 
     @Test
-    public void testProcessSimpleEvent() throws IOException {
+    public void processSimpleEventPreservesAllFields() throws IOException {
         Path inputPath = helper.recording()
                 .addSimpleEvent("Hello World", 42, true)
                 .build();
@@ -143,7 +143,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testEventRemoval() throws IOException {
+    public void modifierRemovesMatchingEvents() throws IOException {
         @Name("jdk.SystemProcess")
         class SystemProcessEvent extends Event {
             String processName = "test-process";
@@ -174,7 +174,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testModifierStringReplacement() throws IOException {
+    public void modifierRedactsStringFields() throws IOException {
         helper.roundtrip(() -> {
             SimpleEvent event = new SimpleEvent();
             event.message = "secret";
@@ -196,7 +196,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testModifierIntMultiplication() throws IOException {
+    public void modifierTransformsIntegerFields() throws IOException {
         helper.roundtrip(() -> {
             SimpleEvent event = new SimpleEvent();
             event.message = "test";
@@ -218,7 +218,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testModifierEventRemoval() throws IOException {
+    public void modifierSelectivelyRemovesEvents() throws IOException {
         var verifier = helper.roundtrip(() -> {
             SimpleEvent event1 = new SimpleEvent();
             event1.message = "keep";
@@ -254,7 +254,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testModifierComplexFields() throws IOException {
+    public void modifierTransformsMultipleComplexFields() throws IOException {
         helper.roundtrip(() -> {
             ComplexEvent event = new ComplexEvent();
             event.stringField = "original";
@@ -289,7 +289,7 @@ public class JFRProcessorTest {
     // ========== Edge Cases ==========
 
     @Test
-    public void testRoundtripBoundaryValues() throws IOException {
+    public void roundtripPreservesBoundaryValues() throws IOException {
         helper.roundtrip(() -> {
             ComplexEvent event = new ComplexEvent();
             event.stringField = "";  // Empty string
@@ -309,7 +309,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripSpecialFloatingPointValues() throws IOException {
+    public void roundtripPreservesSpecialFloatingPointValues() throws IOException {
         helper.roundtrip(() -> {
             ComplexEvent event1 = new ComplexEvent();
             event1.stringField = "NaN test";
@@ -329,7 +329,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripUnicodeAndSpecialCharacters() throws IOException {
+    public void roundtripPreservesUnicodeAndSpecialCharacters() throws IOException {
         helper.roundtrip(() -> {
             SimpleEvent event1 = new SimpleEvent();
             event1.message = "Unicode: 你好世界 🎉 αβγδ";
@@ -352,7 +352,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripLargeEventCount() throws IOException {
+    public void roundtripPreservesLargeEventCount() throws IOException {
         helper.roundtrip(() -> {
             for (int i = 0; i < 100; i++) {
                 SimpleEvent event = new SimpleEvent();
@@ -369,9 +369,9 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtripWithStackTrace() throws IOException {
+    public void roundtripPreservesStackTrace() throws IOException {
         @Name("test.EventWithStackTrace")
-        @StackTrace(true)
+        @StackTrace
         class EventWithStackTrace extends Event {
             @Label("Message")
             String message;
@@ -390,47 +390,11 @@ public class JFRProcessorTest {
         .verifyEventsFullyEqual();
     }
 
-    // ========== Modifier Tests ==========
-
-    // ========== Complex Event Tests ==========
-
-    @Test
-    public void testComplexEventAllTypes() throws IOException {
-        Path inputPath = helper.createTestRecording(() -> {
-            ComplexEvent event = new ComplexEvent();
-            event.stringField = "test string";
-            event.intField = 42;
-            event.longField = 9223372036854775807L;
-            event.floatField = 3.14f;
-            event.doubleField = 2.71828;
-            event.booleanField = true;
-            event.byteField = (byte) 127;
-            event.shortField = (short) 32767;
-            event.charField = 'X';
-            event.commit();
-        });
-
-        helper.verify(helper.process()
-                .from(inputPath)
-                .process())
-                .findEvent("test.ComplexEvent")
-                .hasString("stringField", "test string")
-                .hasInt("intField", 42)
-                .hasLong("longField", 9223372036854775807L)
-                .hasFloat("floatField", 3.14f, 0.001f)
-                .hasDouble("doubleField", 2.71828, 0.00001)
-                .hasBoolean("booleanField", true)
-                .hasByte("byteField", (byte) 127)
-                .hasShort("shortField", (short) 32767)
-                .hasChar("charField", 'X');
-    }
-
-
 
     // ========== Edge Cases ==========
 
     @Test
-    public void testEmptyRecording() throws IOException {
+    public void emptyRecordingProducesEmptyOutput() throws IOException {
         Path emptyPath = helper.createTestRecording(() -> {
             // No events
         });
@@ -440,23 +404,6 @@ public class JFRProcessorTest {
                 .process())
                 .fileExists()
                 .hasTestEventCount(0);
-    }
-
-    @Test
-    public void testNullFieldValues() throws IOException {
-        Path inputPath = helper.createTestRecording(() -> {
-            SimpleEvent event = new SimpleEvent();
-            event.message = null;  // Null string
-            event.count = 0;
-            event.flag = false;
-            event.commit();
-        });
-
-        helper.verify(helper.process()
-                .from(inputPath)
-                .process())
-                .findEvent("test.SimpleEvent")
-                .fieldIsNull("message");
     }
 
     @Test
@@ -493,7 +440,7 @@ public class JFRProcessorTest {
     // ========== Mixed and Interleaved Event Tests ==========
 
     @Test
-    public void testRoundtrip_MixedNullAndNonNull() throws IOException {
+    public void roundtripPreservesMixedNullAndNonNullValues() throws IOException {
         helper.roundtrip(() -> {
             for (int i = 0; i < 5; i++) {
                 SimpleEvent event = new SimpleEvent();
@@ -509,7 +456,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtrip_InterleavedEventTypes() throws IOException {
+    public void roundtripPreservesInterleavedEventTypes() throws IOException {
         helper.roundtrip(() -> {
             for (int i = 0; i < 10; i++) {
                 SimpleEvent simple = new SimpleEvent();
@@ -540,36 +487,9 @@ public class JFRProcessorTest {
         .eventsOfTypeFullyPreserved("test.ComplexEvent");
     }
 
-    // ========== All Events Fully Preserved Tests ==========
 
     @Test
-    public void testRoundtrip_AllEventsFullyPreserved() throws IOException {
-        helper.roundtrip(() -> {
-            SimpleEvent simple = new SimpleEvent();
-            simple.message = "test";
-            simple.count = 42;
-            simple.flag = true;
-            simple.commit();
-
-            ComplexEvent complex = new ComplexEvent();
-            complex.stringField = "complex";
-            complex.intField = 123;
-            complex.longField = 456L;
-            complex.floatField = 1.23f;
-            complex.doubleField = 4.56;
-            complex.booleanField = false;
-            complex.byteField = (byte) 7;
-            complex.shortField = (short) 89;
-            complex.charField = 'A';
-            complex.commit();
-        })
-        .withNoModification()
-        .eventCountPreserved()
-        .allEventsFullyPreserved(); // Verify all events at once
-    }
-
-    @Test
-    public void testToStringOnParsedEventWithoutRoundtrip() throws IOException {
+    public void eventToStringWorksAfterProcessing() throws IOException {
         Path inputPath = helper.recording()
                 .addSimpleEvent("Test ToString", 7, false)
                 .build();
@@ -590,7 +510,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testEventFieldAccessAfterProcessing() throws IOException {
+    public void eventFieldsAccessibleAfterProcessing() throws IOException {
         Path inputPath = helper.recording()
                 .addSimpleEvent("Test Field Access", 7, false)
                 .build();
@@ -610,7 +530,7 @@ public class JFRProcessorTest {
     // ========== Temporal Annotations Tests ==========
 
     @Test
-    public void testRoundtrip_TimestampEvent() throws IOException {
+    public void roundtripPreservesTimestampAnnotations() throws IOException {
         helper.roundtrip(() -> {
             TimestampEvent event = new TimestampEvent();
             long currentTime = System.currentTimeMillis();
@@ -628,7 +548,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtrip_DataAmountEvent() throws IOException {
+    public void roundtripPreservesDataAmountAnnotations() throws IOException {
         helper.roundtrip(() -> {
             DataAmountEvent event = new DataAmountEvent();
             event.bytes = 1024L * 1024L * 1024L; // 1 GB
@@ -643,7 +563,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtrip_ThreadEvent() throws IOException {
+    public void roundtripPreservesThreadAnnotations() throws IOException {
         helper.roundtrip(() -> {
             ThreadEvent event = new ThreadEvent();
             event.thread = Thread.currentThread();
@@ -659,7 +579,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtrip_ContentTypeEvent() throws IOException {
+    public void roundtripPreservesContentTypeAnnotations() throws IOException {
         helper.roundtrip(() -> {
             ContentTypeEvent event = new ContentTypeEvent();
             event.bytes = 512L * 1024L; // 512 KB
@@ -674,7 +594,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtrip_ComprehensiveDataAmountEvent() throws IOException {
+    public void roundtripPreservesComprehensiveDataAmountAnnotations() throws IOException {
         helper.roundtrip(() -> {
             ComprehensiveDataAmountEvent event = new ComprehensiveDataAmountEvent();
             event.bytesValue = 1024L; // 1 KB
@@ -692,7 +612,7 @@ public class JFRProcessorTest {
     }
 
     @Test
-    public void testRoundtrip_AllContentTypesEvent() throws IOException {
+    public void roundtripPreservesAllContentTypeAnnotations() throws IOException {
         helper.roundtrip(() -> {
             AllContentTypesEvent event = new AllContentTypesEvent();
             // Data amounts
@@ -727,7 +647,7 @@ public class JFRProcessorTest {
     // ========== Multi-File Processing Tests ==========
 
     @Test
-    public void testProcessMultipleRecordingFiles() throws IOException {
+    public void concatenatesMultipleRecordingFiles() throws IOException {
         // Create first recording with simple events
         Path recording1 = helper.recording()
                 .withName("recording1")
