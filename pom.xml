@@ -6,7 +6,9 @@
 
     <groupId>me.bechberger.jfr</groupId>
     <artifactId>basic-jfr-processor</artifactId>
-    <version>0.0.0</version>
+    <version>0.1.0</version>
+
+    <description>A small Java library for using the JMC JFR API to write RecordedEvents to file</description>
 
     <licenses>
         <license>
