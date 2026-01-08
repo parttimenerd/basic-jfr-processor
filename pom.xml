@@ -4,11 +4,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <name>basic-jfr-processor</name>
+
     <groupId>me.bechberger.jfr</groupId>
     <artifactId>basic-jfr-processor</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 
     <description>A small Java library for using the JMC JFR API to write RecordedEvents to file</description>
+
+    <url>https://github.com/parttimenerd/basic-jfr-processor</url>
 
     <licenses>
         <license>
