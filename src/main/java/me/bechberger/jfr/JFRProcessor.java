@@ -172,7 +172,7 @@ public class JFRProcessor {
      * Register an event type without writing the event.
      * This is part of phase 1 of the two-pass processing.
      */
-    private void registerEventType(RecordedEvent event) {
+    public void registerEventType(RecordedEvent event) {
         EventType eventType = event.getEventType();
         String eventTypeName = eventType.getName();
 
@@ -202,7 +202,7 @@ public class JFRProcessor {
      * Write an event to the output.
      * This is part of phase 3 of the two-pass processing.
      */
-    private void writeEvent(RecordedEvent event) {
+    public void writeEvent(RecordedEvent event) {
         Type type = output.getType(event.getEventType().getName());
         output.writeEvent(type.asValue(b -> createEventTypedValue(b, event)));
     }

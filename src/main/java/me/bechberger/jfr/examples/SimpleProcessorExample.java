@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Simple example that demonstrates using `JFRProcessor` with a basic modifier that drops events of a specified type.
+ * Simple example that demonstrates using {@link JFRProcessor} with a basic modifier that drops events of a specified type.
  *
  * Usage:
  *   java -cp <project-classpath> me.bechberger.jfr.examples.SimpleProcessorExample input.jfr output.jfr <event-name-to-drop>
